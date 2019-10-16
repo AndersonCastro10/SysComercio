@@ -8,7 +8,7 @@ using System.Data.SqlClient;
 
 namespace CamadaDados
 {
-    class DadosCategorias
+    public class DadosCategorias
     {
         public int IdCategoria { get; set; }
         public string Nome { get; set; }
@@ -29,21 +29,52 @@ namespace CamadaDados
             TextoBuscar = textoBuscar;
         }
 
+        // Consturtor com parametros para inserir
+
+        public DadosCategorias(string nome, string descricao)
+        {
+            Nome = nome;
+            Descricao = descricao;
+        }
+
+        // Consturtor com parametros para Editar
+
+        public DadosCategorias(int idCategoria, string nome, string descricao)
+        {
+            IdCategoria = idCategoria;
+            Nome = nome;
+            Descricao = descricao;
+        }
+
+        // Consturtor com parametros para Excluir
+
+        public DadosCategorias(int idCategoria)
+        {
+            IdCategoria = idCategoria;
+        }
+
+        // Consturtor com parametros para buscar texto
+
+        public DadosCategorias(string textoBuscar)
+        {
+            TextoBuscar = textoBuscar;
+        }
+
         // Metodo de inserir 
 
         public string Inserir (DadosCategorias dadosCategorias)
         {
             string resp = "";
 
-            SqlConnection sqlCon = new SqlConnection();
+            SqlConnection sqlConnection = new SqlConnection();
 
             try
             {
-                sqlCon.ConnectionString = Conexao.CaminhoBanco;
-                sqlCon.Open();
+                sqlConnection.ConnectionString = Conexao.CaminhoBanco;
+                sqlConnection.Open();
 
                 SqlCommand sqlCommand = new SqlCommand();
-                sqlCommand.Connection = sqlCon;
+                sqlCommand.Connection = sqlConnection;
 
                 sqlCommand.CommandText = "spInserirCategoria";
                 sqlCommand.CommandType = CommandType.StoredProcedure; // Para avisar que é uma procedure
@@ -79,17 +110,19 @@ namespace CamadaDados
 
                 //Executar o comando
 
-                return resp = sqlCommand.ExecuteNonQuery() == 1 ? "Ok" : "Registro nao foi inserido";
+                resp = sqlCommand.ExecuteNonQuery() == 1 ? "Ok" : "Registro nao foi inserido";
 
             }
             catch (Exception e )
             {
-                return resp = e.Message + " Erro na inserção !";
+                resp = e.Message + " Erro na inserção !";
             }
             finally
             {
-                if(sqlCon.State == ConnectionState.Open) sqlCon.Close(); // Verifica se a conexão com o banco esta aberta
+                if(sqlConnection.State == ConnectionState.Open) sqlConnection.Close(); // Verifica se a conexão com o banco esta aberta
             }
+
+            return resp;
         }
 
         // Metodo de Editar
@@ -98,15 +131,15 @@ namespace CamadaDados
         {
             string resp = "";
 
-            SqlConnection sqlCon = new SqlConnection();
+            SqlConnection sqlConnection = new SqlConnection();
 
             try
             {
-                sqlCon.ConnectionString = Conexao.CaminhoBanco;
-                sqlCon.Open();
+                sqlConnection.ConnectionString = Conexao.CaminhoBanco;
+                sqlConnection.Open();
 
                 SqlCommand sqlCommand = new SqlCommand();
-                sqlCommand.Connection = sqlCon;
+                sqlCommand.Connection = sqlConnection;
 
                 sqlCommand.CommandText = "spInserirCategoria";
                 sqlCommand.CommandType = CommandType.StoredProcedure; // Para avisar que é uma procedure
@@ -142,38 +175,140 @@ namespace CamadaDados
 
                 //Executar o comando
 
-                return resp = sqlCommand.ExecuteNonQuery() == 1 ? "Ok" : "A edição não foi feita!";
+                resp = sqlCommand.ExecuteNonQuery() == 1 ? "Ok" : "A edição não foi feita!";
 
             }
             catch (Exception e)
             {
-                return resp = e.Message + " Erro na edição!";
+                resp = e.Message + " Erro na edição!";
             }
             finally
             {
-                if (sqlCon.State == ConnectionState.Open) sqlCon.Close(); // Verifica se a conexão com o banco esta aberta
+                if (sqlConnection.State == ConnectionState.Open) sqlConnection.Close(); // Verifica se a conexão com o banco esta aberta
             }
+
+            return resp;
         }
 
         // Metodo de Excluir 
 
         public string Excluir(DadosCategorias dadosCategorias)
         {
+            string resp = "";
 
+            SqlConnection sqlConnection = new SqlConnection();
+
+            try
+            {
+                sqlConnection.ConnectionString = Conexao.CaminhoBanco;
+                sqlConnection.Open();
+
+                SqlCommand sqlCommand = new SqlCommand();
+                sqlCommand.Connection = sqlConnection;
+
+                sqlCommand.CommandText = "spDeletarCategoria";
+                sqlCommand.CommandType = CommandType.StoredProcedure; // Para avisar que é uma procedure
+
+                SqlParameter parametroIdCategoria = new SqlParameter
+                {
+                    ParameterName = "@idCategoria",
+                    SqlDbType = SqlDbType.Int,
+                    Value = IdCategoria
+                };
+
+                sqlCommand.Parameters.Add(parametroIdCategoria);
+                
+                //Executar o comando
+
+                resp = sqlCommand.ExecuteNonQuery() == 1 ? "Ok" : "A exclusão não foi feita!";
+
+            }
+            catch (Exception e)
+            {
+                resp = e.Message + " Erro na exclusão!";
+            }
+            finally
+            {
+                if (sqlConnection.State == ConnectionState.Open) sqlConnection.Close(); // Verifica se a conexão com o banco esta aberta
+            }
+
+            return resp;
         }
 
-        // Metodo Mostrar 
+        // Metodo Visualizar Categoria 
 
-        public DataTable Mostrar (DadosCategorias dadosCategorias)
+        public DataTable Visualizar()
         {
+            DataTable dataTableResultado = new DataTable("Categoria");
+            SqlConnection sqlConnection = new SqlConnection();
 
+            try
+            {
+                sqlConnection.ConnectionString = Conexao.CaminhoBanco;
+                SqlCommand sqlCommand = new SqlCommand
+                {
+                    Connection = sqlConnection,
+                    CommandText = "spVisualizarCategoria",
+                    CommandType = CommandType.StoredProcedure
+                };
+
+                // Toda veez que for fazer uma consulta guardar informações e exibir em uma tabela usar o dataAdapter
+
+                SqlDataAdapter sqlDataAdapter = new SqlDataAdapter(sqlCommand);
+                sqlDataAdapter.Fill(dataTableResultado);
+
+            }
+            catch (Exception)
+            {
+                dataTableResultado = null;
+            }
+            finally
+            {
+                if (sqlConnection.State == ConnectionState.Open) sqlConnection.Close(); // Verifica se a conexão com o banco esta aberta
+            }
+            return dataTableResultado;
         }
 
         // Metodo buscar nome 
 
-        public string BuscarNome(DadosCategorias dadosCategorias)
+        public DataTable BuscarNome(DadosCategorias dadosCategorias)
         {
+            DataTable dataTableResultado = new DataTable("Categoria");
+            SqlConnection sqlConnection = new SqlConnection();
 
+            try
+            {
+                sqlConnection.ConnectionString = Conexao.CaminhoBanco;
+                SqlCommand sqlCommand = new SqlCommand
+                {
+                    Connection = sqlConnection,
+                    CommandText = "spBuscarNome",
+                    CommandType = CommandType.StoredProcedure
+                };
+
+                // Toda veez que for fazer uma consulta guardar informações e exibir em uma tabela usar o dataAdapter
+
+                SqlDataAdapter sqlDataAdapter = new SqlDataAdapter(sqlCommand);
+                sqlDataAdapter.Fill(dataTableResultado);
+
+                SqlParameter parametroTextoBuscar = new SqlParameter
+                {
+                    ParameterName = "@textoBuscar",
+                    SqlDbType = SqlDbType.VarChar,
+                    Size = 50,
+                    Value = TextoBuscar
+                };
+                sqlCommand.Parameters.Add(parametroTextoBuscar);
+            }
+            catch (Exception)
+            {
+                dataTableResultado = null;
+            }
+            finally
+            {
+                if (sqlConnection.State == ConnectionState.Open) sqlConnection.Close(); // Verifica se a conexão com o banco esta aberta
+            }
+            return dataTableResultado;
         }
     }
 }
